@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #!/usr/bin/python
 
 import sys
@@ -6,17 +7,25 @@ import hashlib
 import os
 
 DEBUGGING = False
+BINARY = ['.ico', '.png', '.gif', '.jpg', '.jpeg', '.pdf', '.docx']
 
 
 def run(odir, cdir):
     ohashes = checksums(odir)
     chashes = checksums(cdir)
-    result = []
+    result = {}
     for f in chashes:
-        if (f not in ohashes) or (chashes[f] != ohashes[f]):
-            result.append(f)
+        if f not in ohashes:
+            result[f] = '-'
+        elif chashes[f] != ohashes[f]:
+            result[f] = '*'
     for f in sorted(result):
-        print(f)
+        opath = os.path.join(odir, f)
+        cpath = os.path.join(cdir, f)
+        fname, fext = os.path.splitext(opath)
+        if os.path.exists(opath) and os.path.exists(cpath) and (fext not in BINARY) and cmpbylines(opath, cpath):
+            continue
+        print("{} {}".format(result[f], f))
 
 
 def checksums(targetdir):
@@ -37,6 +46,18 @@ def md5(fname):
         for chunk in iter(lambda: f.read(4096), b""):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
+
+
+def cmpbylines(path1, path2):
+    with open(path1, 'r') as file1, open(path2, 'r') as file2:
+        line1, line2 = file1.readline(), file2.readline()
+        while line1 != '' and line2 != '':
+            if line1 != line2:
+                return False
+            line1, line2 = file1.readline(), file2.readline()
+        if (line1 == '' and line2 != '') or (line1 != '' and line2 == ''):
+            return False
+    return True
 
 
 def main(argv):
