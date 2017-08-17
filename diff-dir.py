@@ -50,13 +50,20 @@ def md5(fname):
 
 def cmpbylines(path1, path2):
     with open(path1, 'r') as file1, open(path2, 'r') as file2:
-        line1, line2 = file1.readline(), file2.readline()
-        while line1 != '' and line2 != '':
-            if line1 != line2:
-                return False
-            line1, line2 = file1.readline(), file2.readline()
-        if (line1 == '' and line2 != '') or (line1 != '' and line2 == ''):
+        lines1 = file1.read().splitlines()
+        lines2 = file2.read().splitlines()
+        if len(lines1) != len(lines2):
             return False
+        it1 = iter(lines1)
+        it2 = iter(lines2)
+        while True:
+            try:
+                line1 = next(it1)
+                line2 = next(it2)
+                if line1 != line2:
+                    return False
+            except StopIteration:
+                break
     return True
 
 
