@@ -10,7 +10,7 @@ DEBUGGING = False
 BINARY = ['.ico', '.png', '.gif', '.jpg', '.jpeg', '.pdf', '.docx']
 
 
-def run(odir, cdir):
+def run(odir, cdir, linebyline):
     ohashes = checksums(odir)
     chashes = checksums(cdir)
     result = {}
@@ -20,12 +20,13 @@ def run(odir, cdir):
         elif chashes[f] != ohashes[f]:
             result[f] = '*'
     for f in sorted(result):
-        opath = os.path.join(odir, f)
-        cpath = os.path.join(cdir, f)
-        fname, fext = os.path.splitext(opath)
-        if os.path.exists(opath) and os.path.exists(cpath) and (fext not in BINARY) and cmpbylines(opath, cpath):
-            continue
-        print("{} {}".format(result[f], f))
+        if linebyline:
+            opath = os.path.join(odir, f)
+            cpath = os.path.join(cdir, f)
+            fname, fext = os.path.splitext(opath)
+            if os.path.exists(opath) and os.path.exists(cpath) and (fext not in BINARY) and cmpbylines(opath, cpath):
+                continue
+        yield (f, result[f])
 
 
 def checksums(targetdir):
@@ -70,15 +71,21 @@ def cmpbylines(path1, path2):
 def main(argv):
     origindir = ''
     clonedir = ''
+    linebyline = False
     try:
-        opts, args = getopt.getopt(argv, "ho:c:", ["odir=", "cdir="])
+        opts, args = getopt.getopt(argv, "o:c:lh", ["odir=", "cdir=", "line-by-line", "help"])
     except getopt.GetoptError:
-        print('diff-dir.py -o <origindir> -c <clonedir>')
+        print('diff-dir.py -o <origindir> -c <clonedir> -l')
         sys.exit(2)
     for opt, arg in opts:
-        if opt == '-h':
-            print('diff-dir.py -o <origindir> -c <clonedir>')
+        if opt == "-h":
+            print('diff-dir.py -o <origindir> -c <clonedir> -l')
             sys.exit()
+        elif opt == "--help":
+            print('diff-dir.py --odir <origindir> --cdir <clonedir> --line-by-line')
+            sys.exit()
+        elif opt in ("-l", "--line-by-line"):
+            linebyline = True
         elif opt in ("-o", "--odir"):
             origindir = arg
         elif opt in ("-c", "--cdir"):
@@ -86,7 +93,8 @@ def main(argv):
     if DEBUGGING:
         print('Origin dir is "{}"'.format(origindir))
         print('Clone dir is "{}"'.format(clonedir))
-    run(origindir, clonedir)
+    for path, result in run(origindir, clonedir, linebyline):
+        print("{} {}".format(result, path))
 
 if __name__ == "__main__":
     main(sys.argv[1:])
