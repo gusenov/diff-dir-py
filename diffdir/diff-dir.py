@@ -10,7 +10,7 @@ DEBUGGING = False
 BINARY = ['.ico', '.png', '.gif', '.jpg', '.jpeg', '.pdf', '.docx']
 
 
-def run(odir, cdir, linebyline):
+def cmp(odir, cdir, linebyline):
     ohashes = checksums(odir)
     chashes = checksums(cdir)
     result = {}
@@ -93,8 +93,8 @@ def main(argv):
     if DEBUGGING:
         print('Origin dir is "{}"'.format(origindir))
         print('Clone dir is "{}"'.format(clonedir))
-    for path, result in run(origindir, clonedir, linebyline):
-        print("{} {}".format(result, path))
+    for path, status in cmp(origindir, clonedir, linebyline):
+        print("{} {}".format(status, path))
 
 if __name__ == "__main__":
     main(sys.argv[1:])
